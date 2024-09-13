@@ -1,0 +1,29 @@
+linters:
+  # additionaly to default linters
+  enable:
+    - errname
+    - errorlint
+    - gocognit
+    - gocritic
+    - godot
+    - gofmt
+    - misspell
+    - mnd
+    - nonamedreturns
+    - paralleltest
+    - reassign
+    - sloglint
+    - tagliatelle
+linters-settings:
+  gocognit:
+    min-complexity: 10
+  misspell:
+    locale: US
+    mode: "default"
+  nonamedreturns:
+    report-error-in-defer: true
+  sloglint:
+    attr-only: true
+    no-global: "all"
+
+
