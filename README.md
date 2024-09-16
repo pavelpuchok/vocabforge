@@ -1,7 +1,7 @@
 # vocabforge
 
 ## Getting Started
-```
+```shell
 # enter development environment
 nix-shell
 
