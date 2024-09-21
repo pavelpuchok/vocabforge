@@ -100,10 +100,10 @@ repos:
       #
       # Go Test
       #
-      #-   id: go-test-mod
-      - id: go-test-pkg
+      - id: go-test-mod
+      # id: go-test-pkg
       #-   id: go-test-repo-mod
-      #   id: go-test-repo-pkg
+      #id: go-test-repo-pkg
       #
       # Go Vet
       #
@@ -162,11 +162,11 @@ repos:
       # - Supports repo config file for configuration
       # - https://github.com/golangci/golangci-lint
       #
-      # id: golangci-lint
-      # id: golangci-lint-mod
-      - id: golangci-lint-pkg
+      #- id: golangci-lint
+      - id: golangci-lint-mod
+      #- id: golangci-lint-pkg
       # id: golangci-lint-repo-mod
-      # id: golangci-lint-repo-pkg
+      #- id: golangci-lint-repo-pkg
       #
       # Invoking Custom Go Tools
       # - Configured *entirely* through the `args` attribute, ie:

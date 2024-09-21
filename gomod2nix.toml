@@ -1,3 +1,36 @@
 schema = 3
 
 [mod]
+  [mod."github.com/golang/snappy"]
+    version = "v0.0.4"
+    hash = "sha256-Umx+5xHAQCN/Gi4HbtMhnDCSPFAXSsjVbXd8n5LhjAA="
+  [mod."github.com/klauspost/compress"]
+    version = "v1.13.6"
+    hash = "sha256-aUTfsB3IfJXil8SPgtAmU1t+l6Dxs03UBB9Pa6StuqM="
+  [mod."github.com/montanaflynn/stats"]
+    version = "v0.7.1"
+    hash = "sha256-0QXUA/syOtDSBooh3isAffrVAjpSoBmSMMuZfO5maHg="
+  [mod."github.com/xdg-go/pbkdf2"]
+    version = "v1.0.0"
+    hash = "sha256-UKK8JrdxEeToqs53sUUMUZNQv8w+lzuhd7bNXryMN9o="
+  [mod."github.com/xdg-go/scram"]
+    version = "v1.1.2"
+    hash = "sha256-BPlloFojiFA8TiYIaBPW9BFBNkCmYD68JrY5gry1f64="
+  [mod."github.com/xdg-go/stringprep"]
+    version = "v1.0.4"
+    hash = "sha256-zGNSty2K8PoqMw71AHPvICuUvIzXzUvCW+fCNr3XmLE="
+  [mod."github.com/youmark/pkcs8"]
+    version = "v0.0.0-20240726163527-a2c0da244d78"
+    hash = "sha256-7ETUt8onE9mdUlvHT5xxzfh8mK0qw15ZSYXQCtah9p4="
+  [mod."go.mongodb.org/mongo-driver"]
+    version = "v1.17.0"
+    hash = "sha256-ubvmrBVXySR45j2HM+JxO0t35AjERmAKU7/s/M6Kc20="
+  [mod."golang.org/x/crypto"]
+    version = "v0.26.0"
+    hash = "sha256-Iicrsb65fCmjfPILKoSLyBZMwe2VUcoTF5SpYTCQEuk="
+  [mod."golang.org/x/sync"]
+    version = "v0.8.0"
+    hash = "sha256-usvF0z7gq1vsX58p4orX+8WHlv52pdXgaueXlwj2Wss="
+  [mod."golang.org/x/text"]
+    version = "v0.17.0"
+    hash = "sha256-R8JbsP7KX+KFTHH7SjRnUGCdvtagylVOfngWEnVSqBc="

@@ -23,5 +23,13 @@ pkgs.mkShell {
     pkgs.go
     pkgs.golangci-lint
     pkgs.pre-commit
+    pkgs.docker
+    pkgs.docker-compose
   ];
+
+  shellHook = ''
+      export MONGO_USER=supertuperuser
+      export MONGO_PASS=supercoolpass
+      export MONGO_URI=mongodb://supertuperuser:supercoolpass@localhost:27017/
+    '';
 }
