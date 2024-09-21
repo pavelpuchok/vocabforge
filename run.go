@@ -16,7 +16,7 @@ import (
 func run(cfg Config, logger *slog.Logger, args []string) error {
 	//nolint:mnd
 	if len(args) < 2 {
-		return errors.New("atleast one subcommand (create-user) should be passed")
+		return errors.New("At least one subcommand (e.g., 'create-user') must be provided")
 	}
 
 	if cfg.Mongo.URI == "" {
@@ -27,6 +27,11 @@ func run(cfg Config, logger *slog.Logger, args []string) error {
 	if err != nil {
 		return fmt.Errorf("main.run unable to establish mongo database connection. %w", err)
 	}
+	defer func() {
+		if err := db.Client().Disconnect(context.Background()); err != nil {
+			logger.Error("main.run failed to disconnect MongoDB client", slog.String("err", err.Error()))
+		}
+	}()
 
 	createUser := createuser.UseCase{
 		UsersService: users.NewService(users.NewMongoRepository(db)),
@@ -42,7 +47,7 @@ func run(cfg Config, logger *slog.Logger, args []string) error {
 			return fmt.Errorf("main.run unable to create user. %w", err)
 		}
 
-		logger.InfoContext(ctx, "CreateUser: User created", slog.Any("user", usr))
+		logger.InfoContext(ctx, "CreateUser: User created", slog.String("user_id", usr.ID.String()))
 	default:
 		return fmt.Errorf("unexpected subcommand %s", args[1])
 	}
@@ -77,11 +82,4 @@ func initializeLogger(w io.Writer, cfg Config) (*slog.Logger, error) {
 		return nil, fmt.Errorf("unknown log type %v", cfg.Log.Type)
 	}
 	return slog.New(h), nil
-}
-
-type App struct {
-}
-
-type CreateUserUseCase interface {
-	Run(ctx context.Context)
 }
