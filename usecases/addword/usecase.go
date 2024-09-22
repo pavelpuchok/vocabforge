@@ -8,10 +8,10 @@ import (
 )
 
 type UseCase struct {
-	VocabularyService Service
+	VocabularyService VocabularyService
 }
 
-type Service interface {
+type VocabularyService interface {
 	AddWord(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language, exercises []models.SentenceExercise) (models.Word, error)
 }
 

@@ -3,10 +3,12 @@ module github.com/pavelpuchok/vocabforge
 go 1.22.5
 
 require (
+	github.com/google/go-cmp v0.6.0
 	github.com/knadh/koanf/providers/basicflag v1.0.0
 	github.com/knadh/koanf/providers/env v0.1.0
 	github.com/knadh/koanf/providers/structs v0.1.0
 	github.com/knadh/koanf/v2 v2.1.1
+	github.com/sashabaranov/go-openai v1.30.3
 	go.mongodb.org/mongo-driver v1.17.0
 )
 

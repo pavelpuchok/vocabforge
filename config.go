@@ -35,6 +35,14 @@ type Config struct {
 		Type  LogType
 		Level slog.Level
 	}
+	ChatGPT struct {
+		APIToken string `koanf:"token"`
+	} `koanf:"chatgpt"`
+	Exercise struct {
+		Sentences struct {
+			DefaultCount int `koanf:"count"`
+		} `koanf:"sentences,omitempty"`
+	} `koanf:"exercise"`
 
 	Spelling        string `koanf:"spelling"`
 	Definition      string `koanf:"definition"`
@@ -138,11 +146,13 @@ func configWithDefaults(s Subcommand) Config {
 	cfg.Mongo.DatabaseName = "vocabforge"
 
 	//nolint:mnd
-	cfg.CLI.CommandTimeout = 3 * time.Second
+	cfg.CLI.CommandTimeout = 15 * time.Second
 
 	cfg.Log.Level = slog.LevelDebug
 
 	cfg.Language = "en_US"
+
+	cfg.Exercise.Sentences.DefaultCount = 16
 
 	return cfg
 }
