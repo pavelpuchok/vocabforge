@@ -36,10 +36,11 @@ type Config struct {
 		Level slog.Level
 	}
 
-	Spelling   string `koanf:"spelling"`
-	Definition string `koanf:"definition"`
-	Language   string `koanf:"language"`
-	UserID     string `koanf:"user-id"`
+	Spelling        string `koanf:"spelling"`
+	Definition      string `koanf:"definition"`
+	Language        string `koanf:"language"`
+	LexicalCategory string `koanf:"lexical-category"`
+	UserID          string `koanf:"user-id"`
 }
 
 type LogType int8
@@ -117,6 +118,7 @@ func parseArgs(args []string) (Subcommand, *flag.FlagSet, error) {
 		fs.String("spelling", "", "word's spelling")
 		fs.String("definition", "", "word's definition")
 		fs.String("language", "", "spelling and definition language, for ex: en_US")
+		fs.String("lexical-category", "", "lexical category of word")
 	}
 
 	err := fs.Parse(args[2:])

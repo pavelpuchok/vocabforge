@@ -4,6 +4,8 @@ import (
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func setEnv(e map[string]string) {
@@ -71,7 +73,7 @@ func TestParseConfig(t *testing.T) {
 
 		setEnv(actualEnvs)
 
-		cfg, err := ParseConfig([]string{"foo", string(AddWord), "-user-id=abc", "-spelling=sss", "-definition=ddd", "-language=en_GB"})
+		cfg, err := ParseConfig([]string{"foo", string(AddWord), "-user-id=abc", "-spelling=sss", "-definition=ddd", "-language=en_GB", "-lexical-category=adverb"})
 		if err != nil {
 			t.Errorf("unexpected error %s", err)
 		}
@@ -81,9 +83,10 @@ func TestParseConfig(t *testing.T) {
 		expectedCfg.Spelling = "sss"
 		expectedCfg.Definition = "ddd"
 		expectedCfg.Language = "en_GB"
+		expectedCfg.LexicalCategory = "adverb"
 
-		if !reflect.DeepEqual(expectedCfg, cfg) {
-			t.Errorf("unexpected config. \nExpected: %+v\nGot: %+v", expectedCfg, cfg)
+		if diff := cmp.Diff(expectedCfg, cfg); diff != "" {
+			t.Errorf("unexpected config (-want +got):\n%s", diff)
 		}
 	})
 }
