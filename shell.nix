@@ -28,8 +28,8 @@ pkgs.mkShell {
   ];
 
   shellHook = ''
-      export MONGO_USER=supertuperuser
-      export MONGO_PASS=supercoolpass
-      export MONGO_URI=mongodb://supertuperuser:supercoolpass@localhost:27017/
+      export VOCABFORGE_MONGO_USER=supertuperuser
+      export VOCABFORGE_MONGO_PASS=supercoolpass
+      export VOCABFORGE_MONGO_URI=mongodb://supertuperuser:supercoolpass@localhost:27017/
     '';
 }
