@@ -35,12 +35,11 @@ type Config struct {
 		Type  LogType
 		Level slog.Level
 	}
-	AddWord struct {
-		Spelling   string
-		Definition string
-		Language   string
-		UserID     string
-	}
+
+	Spelling   string `koanf:"spelling"`
+	Definition string `koanf:"definition"`
+	Language   string `koanf:"language"`
+	UserID     string `koanf:"user-id"`
 }
 
 type LogType int8
@@ -141,7 +140,7 @@ func configWithDefaults(s Subcommand) Config {
 
 	cfg.Log.Level = slog.LevelDebug
 
-	cfg.AddWord.Language = "en_US"
+	cfg.Language = "en_US"
 
 	return cfg
 }

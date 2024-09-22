@@ -37,32 +37,42 @@ func entityToModel(e entity) (models.Word, error) {
 	if err := status.UnmarshalText(e.LearnStatus); err != nil {
 		return models.Word{}, fmt.Errorf("unable to unmarshal entity's status %s. %w", e.LearnStatus, err)
 	}
+	var lang models.Language
+	if err := lang.UnmarshalText(e.Language); err != nil {
+		return models.Word{}, fmt.Errorf("unable to unmarshal entity's language %s. %w", e.Language, err)
+	}
 
 	return models.Word{
 		ID:            models.WordID(e.ID.Hex()),
 		UserID:        models.UserID(e.UserID.Hex()),
 		Spelling:      e.Spelling,
 		Definition:    e.Definition,
-		Language:      models.Language(e.Language),
+		Language:      lang,
 		LearnStatus:   status,
 		AnsweredCount: e.AnsweredCount,
 	}, nil
 }
 
-func (r MongoRepository) AddWord(ctx context.Context, userID models.UserID, spell, definition, lang string, exercises []models.SentenceExercise) (models.Word, error) {
+func (r MongoRepository) AddWord(ctx context.Context, userID models.UserID, spell, definition string, lang models.Language, exercises []models.SentenceExercise) (models.Word, error) {
 	userId, err := primitive.ObjectIDFromHex(userID.String())
 	if err != nil {
 		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.AddWord unable to build ObjectId from user's ID %s. %w", userID, err)
 	}
 
-	status := models.Pending
+	defStatus := models.Pending
+	statusMarshalled, _ := defStatus.MarshalText()
+
+	langMarshalled, err := lang.MarshalText()
+	if err != nil {
+		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.AddWord unable to marhal language %v. %w", lang, err)
+	}
 
 	newEntity := entity{
 		UserID:        userId,
 		Spelling:      spell,
 		Definition:    definition,
-		Language:      lang,
-		LearnStatus:   status.String(),
+		Language:      langMarshalled,
+		LearnStatus:   statusMarshalled,
 		AnsweredCount: 0,
 		Exercises:     exercises,
 	}
