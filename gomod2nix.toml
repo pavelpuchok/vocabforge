@@ -1,12 +1,39 @@
 schema = 3
 
 [mod]
+  [mod."github.com/fatih/structs"]
+    version = "v1.1.0"
+    hash = "sha256-OCmubTLF1anwNnkvFZDYHnF6hFlX0WDoe/9+dDlaMPM="
+  [mod."github.com/go-viper/mapstructure/v2"]
+    version = "v2.2.0"
+    hash = "sha256-fAVEnMux3oqnkgwWSNOaDhLmibvfjHKciQ6aR3XqGjc="
   [mod."github.com/golang/snappy"]
     version = "v0.0.4"
     hash = "sha256-Umx+5xHAQCN/Gi4HbtMhnDCSPFAXSsjVbXd8n5LhjAA="
   [mod."github.com/klauspost/compress"]
     version = "v1.13.6"
     hash = "sha256-aUTfsB3IfJXil8SPgtAmU1t+l6Dxs03UBB9Pa6StuqM="
+  [mod."github.com/knadh/koanf/maps"]
+    version = "v0.1.1"
+    hash = "sha256-tUjNmbUFArrbblgjAqqiqAd6jRS8lE6LY98x/9yTS6k="
+  [mod."github.com/knadh/koanf/providers/basicflag"]
+    version = "v1.0.0"
+    hash = "sha256-TCkU3OAtmrsluO7P56yuZIcaTWyBpDFy2fYZQ8MwruY="
+  [mod."github.com/knadh/koanf/providers/env"]
+    version = "v0.1.0"
+    hash = "sha256-oEnAihuWsKNq+8k7+CaQoYmGNTGD60SomEId1ESwZ1I="
+  [mod."github.com/knadh/koanf/providers/structs"]
+    version = "v0.1.0"
+    hash = "sha256-H7FWUf9Atc97hBLMAkW/u54d+7pnHWcWqyGYjqEQYl0="
+  [mod."github.com/knadh/koanf/v2"]
+    version = "v2.1.1"
+    hash = "sha256-Dja/FQquYlsjvk0O+/kHcFSqHCm3S/q8a5D0RhaD+zY="
+  [mod."github.com/mitchellh/copystructure"]
+    version = "v1.2.0"
+    hash = "sha256-VR9cPZvyW62IHXgmMw8ee+hBDThzd2vftgPksQYR/Mc="
+  [mod."github.com/mitchellh/reflectwalk"]
+    version = "v1.0.2"
+    hash = "sha256-VX9DPqChm7jPnyrA3RAYgxAFrAhj7TRKIWD/qR9Zr9s="
   [mod."github.com/montanaflynn/stats"]
     version = "v0.7.1"
     hash = "sha256-0QXUA/syOtDSBooh3isAffrVAjpSoBmSMMuZfO5maHg="

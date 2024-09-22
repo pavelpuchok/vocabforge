@@ -1,23 +1,45 @@
 package main
 
 import (
+	"errors"
+	"flag"
+	"fmt"
 	"log/slog"
-	"os"
+	"strings"
 	"time"
+
+	"github.com/knadh/koanf/providers/basicflag"
+	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/structs"
+	"github.com/knadh/koanf/v2"
+)
+
+type Subcommand string
+
+const (
+	CreateUser Subcommand = "create-user"
+	AddWord    Subcommand = "add-word"
 )
 
 type Config struct {
-	Mongo struct {
-		URI            string
+	Subcommand Subcommand
+	Mongo      struct {
+		URI            string `koanf:"uri"`
 		ConnectTimeout time.Duration
-		DatabaseName   string
-	}
+		DatabaseName   string `koanf:"database"`
+	} `koanf:"mongo"`
 	CLI struct {
 		CommandTimeout time.Duration
 	}
 	Log struct {
 		Type  LogType
 		Level slog.Level
+	}
+	AddWord struct {
+		Spelling   string
+		Definition string
+		Language   string
+		UserID     string
 	}
 }
 
@@ -28,27 +50,88 @@ const (
 	LogTypeJSON
 )
 
-type Env interface {
-	Getenv(key string) string
-}
+const EnvPrefix = "VOCABFORGE_"
 
-type EnvOs struct{}
+func ParseConfig(args []string) (Config, error) {
+	subcmd, flagSet, err := parseArgs(args)
+	if err != nil {
+		return Config{}, fmt.Errorf("main.ParseConfig unable to parse args. %w", err)
+	}
 
-func (_ EnvOs) Getenv(key string) string {
-	return os.Getenv(key)
-}
+	k := koanf.New(".")
 
-func ParseConfigFromEnv(env Env) (Config, error) {
-	cfg := configWithDefaults()
+	// Load default values
+	err = k.Load(structs.Provider(configWithDefaults(subcmd), "koanf"), nil)
+	if err != nil {
+		return Config{}, fmt.Errorf("main.ParseConfig unable to load structs provider with default values. %w", err)
+	}
 
-	// Read values from environment variables
-	cfg.Mongo.URI = env.Getenv("MONGO_URI")
+	// Load values from env and overwrite defaults
+	err = k.Load(env.Provider(EnvPrefix, ".", func(s string) string {
+		return strings.ReplaceAll(
+			strings.ToLower(strings.TrimPrefix(s, EnvPrefix)),
+			"_", ".")
+	}), nil)
+	if err != nil {
+		return Config{}, fmt.Errorf("main.ParseConfig unable to load env provider. %w", err)
+	}
+
+	// Load values from CLI and overwrite previous config
+	err = k.Load(basicflag.Provider(flagSet, "."), nil)
+	if err != nil {
+		return Config{}, fmt.Errorf("main.ParseConfig unable to load basicflag provider. %w", err)
+	}
+
+	var cfg Config
+
+	err = k.Unmarshal("", &cfg)
+	if err != nil {
+		return Config{}, fmt.Errorf("main.ParseConfig unable to unmarshal config. %w", err)
+	}
 
 	return cfg, nil
 }
 
-func configWithDefaults() Config {
-	cfg := Config{}
+func parseArgs(args []string) (Subcommand, *flag.FlagSet, error) {
+	//nolint:mnd
+	if len(args) < 2 {
+		return "", nil, errors.New("missing subcommand")
+	}
+
+	var sb Subcommand
+
+	switch args[1] {
+	case string(CreateUser):
+		sb = CreateUser
+	case string(AddWord):
+		sb = AddWord
+	default:
+		return "", nil, fmt.Errorf("unknown subcommand %s", args[1])
+	}
+
+	fs := flag.NewFlagSet(string(sb), flag.ContinueOnError)
+
+	//nolint:gocritic
+	switch sb {
+	case AddWord:
+		fs.String("user-id", "", "user id")
+		fs.String("spelling", "", "word's spelling")
+		fs.String("definition", "", "word's definition")
+		fs.String("language", "", "spelling and definition language, for ex: en_US")
+	}
+
+	err := fs.Parse(args[2:])
+	if err != nil {
+		return "", nil, fmt.Errorf("unable to parse flagset. %w", err)
+	}
+
+	return sb, fs, nil
+}
+
+func configWithDefaults(s Subcommand) Config {
+	cfg := Config{
+		Subcommand: s,
+	}
 	//nolint:mnd
 	cfg.Mongo.ConnectTimeout = 5 * time.Second
 	cfg.Mongo.DatabaseName = "vocabforge"
@@ -57,6 +140,8 @@ func configWithDefaults() Config {
 	cfg.CLI.CommandTimeout = 3 * time.Second
 
 	cfg.Log.Level = slog.LevelDebug
+
+	cfg.AddWord.Language = "en_US"
 
 	return cfg
 }

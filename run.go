@@ -13,12 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func run(cfg Config, logger *slog.Logger, args []string) error {
-	//nolint:mnd
-	if len(args) < 2 {
-		return errors.New("At least one subcommand (e.g., 'create-user') must be provided")
-	}
-
+func run(cfg Config, logger *slog.Logger) error {
 	if cfg.Mongo.URI == "" {
 		return errors.New("main.run missing MongoDB URI")
 	}
@@ -37,8 +32,9 @@ func run(cfg Config, logger *slog.Logger, args []string) error {
 		UsersService: users.NewService(users.NewMongoRepository(db)),
 	}
 
-	switch args[1] {
-	case "create-user":
+	//nolint:gocritic
+	switch cfg.Subcommand {
+	case CreateUser:
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.CLI.CommandTimeout)
 		defer cancel()
 
@@ -48,8 +44,6 @@ func run(cfg Config, logger *slog.Logger, args []string) error {
 		}
 
 		logger.InfoContext(ctx, "CreateUser: User created", slog.String("user_id", usr.ID.String()))
-	default:
-		return fmt.Errorf("unexpected subcommand %s", args[1])
 	}
 
 	return nil

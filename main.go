@@ -8,7 +8,7 @@ import (
 const exitErrCode = 2
 
 func main() {
-	cfg, err := ParseConfigFromEnv(EnvOs{})
+	cfg, err := ParseConfig(os.Args)
 	if err != nil {
 		panic(err)
 	}
@@ -19,7 +19,7 @@ func main() {
 		os.Exit(exitErrCode)
 	}
 
-	err = run(cfg, logger, os.Args)
+	err = run(cfg, logger)
 	if err != nil {
 		logger.Error("failed", slog.String("err", err.Error()))
 		os.Exit(exitErrCode)
