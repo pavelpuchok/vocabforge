@@ -41,7 +41,7 @@ type Config struct {
 	Exercise struct {
 		Sentences struct {
 			DefaultCount int `koanf:"count"`
-		} `koanf:"sentences,omitempty"`
+		} `koanf:"sentences"`
 	} `koanf:"exercise"`
 
 	Spelling        string `koanf:"spelling"`
