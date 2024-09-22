@@ -35,11 +35,20 @@ type Config struct {
 		Type  LogType
 		Level slog.Level
 	}
+	ChatGPT struct {
+		APIToken string `koanf:"token"`
+	} `koanf:"chatgpt"`
+	Exercise struct {
+		Sentences struct {
+			DefaultCount int `koanf:"count"`
+		} `koanf:"sentences"`
+	} `koanf:"exercise"`
 
-	Spelling   string `koanf:"spelling"`
-	Definition string `koanf:"definition"`
-	Language   string `koanf:"language"`
-	UserID     string `koanf:"user-id"`
+	Spelling        string `koanf:"spelling"`
+	Definition      string `koanf:"definition"`
+	Language        string `koanf:"language"`
+	LexicalCategory string `koanf:"lexical-category"`
+	UserID          string `koanf:"user-id"`
 }
 
 type LogType int8
@@ -117,6 +126,7 @@ func parseArgs(args []string) (Subcommand, *flag.FlagSet, error) {
 		fs.String("spelling", "", "word's spelling")
 		fs.String("definition", "", "word's definition")
 		fs.String("language", "", "spelling and definition language, for ex: en_US")
+		fs.String("lexical-category", "", "lexical category of word")
 	}
 
 	err := fs.Parse(args[2:])
@@ -136,11 +146,13 @@ func configWithDefaults(s Subcommand) Config {
 	cfg.Mongo.DatabaseName = "vocabforge"
 
 	//nolint:mnd
-	cfg.CLI.CommandTimeout = 3 * time.Second
+	cfg.CLI.CommandTimeout = 15 * time.Second
 
 	cfg.Log.Level = slog.LevelDebug
 
 	cfg.Language = "en_US"
+
+	cfg.Exercise.Sentences.DefaultCount = 16
 
 	return cfg
 }

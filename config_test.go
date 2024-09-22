@@ -2,8 +2,9 @@ package main
 
 import (
 	"os"
-	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func setEnv(e map[string]string) {
@@ -25,6 +26,7 @@ func TestParseConfig(t *testing.T) {
 		var actualEnvs = map[string]string{
 			EnvPrefix + "MONGO_URI":      "",
 			EnvPrefix + "MONGO_DATABASE": "",
+			EnvPrefix + "CHATGPT_TOKEN":  "",
 		}
 
 		setEnv(actualEnvs)
@@ -35,8 +37,8 @@ func TestParseConfig(t *testing.T) {
 		}
 
 		expectedCfg := configWithDefaults(CreateUser)
-		if !reflect.DeepEqual(expectedCfg, cfg) {
-			t.Errorf("unexpected config. \nExpected: %+v\nGot: %+v", expectedCfg, cfg)
+		if diff := cmp.Diff(expectedCfg, cfg); diff != "" {
+			t.Errorf("unexpected config (-want +got):\n%s", diff)
 		}
 	})
 
@@ -45,6 +47,7 @@ func TestParseConfig(t *testing.T) {
 		var actualEnvs = map[string]string{
 			EnvPrefix + "MONGO_URI":      "foobar",
 			EnvPrefix + "MONGO_DATABASE": "bazbaz",
+			EnvPrefix + "CHATGPT_TOKEN":  "atata",
 		}
 
 		setEnv(actualEnvs)
@@ -57,8 +60,9 @@ func TestParseConfig(t *testing.T) {
 		expectedCfg := configWithDefaults(CreateUser)
 		expectedCfg.Mongo.URI = "foobar"
 		expectedCfg.Mongo.DatabaseName = "bazbaz"
-		if !reflect.DeepEqual(expectedCfg, cfg) {
-			t.Errorf("unexpected config. \nExpected: %+v\nGot: %+v", expectedCfg, cfg)
+		expectedCfg.ChatGPT.APIToken = "atata"
+		if diff := cmp.Diff(expectedCfg, cfg); diff != "" {
+			t.Errorf("unexpected config (-want +got):\n%s", diff)
 		}
 	})
 
@@ -67,11 +71,12 @@ func TestParseConfig(t *testing.T) {
 		var actualEnvs = map[string]string{
 			EnvPrefix + "MONGO_URI":      "",
 			EnvPrefix + "MONGO_DATABASE": "",
+			EnvPrefix + "CHATGPT_TOKEN":  "",
 		}
 
 		setEnv(actualEnvs)
 
-		cfg, err := ParseConfig([]string{"foo", string(AddWord), "-user-id=abc", "-spelling=sss", "-definition=ddd", "-language=en_GB"})
+		cfg, err := ParseConfig([]string{"foo", string(AddWord), "-user-id=abc", "-spelling=sss", "-definition=ddd", "-language=en_GB", "-lexical-category=adverb"})
 		if err != nil {
 			t.Errorf("unexpected error %s", err)
 		}
@@ -81,9 +86,10 @@ func TestParseConfig(t *testing.T) {
 		expectedCfg.Spelling = "sss"
 		expectedCfg.Definition = "ddd"
 		expectedCfg.Language = "en_GB"
+		expectedCfg.LexicalCategory = "adverb"
 
-		if !reflect.DeepEqual(expectedCfg, cfg) {
-			t.Errorf("unexpected config. \nExpected: %+v\nGot: %+v", expectedCfg, cfg)
+		if diff := cmp.Diff(expectedCfg, cfg); diff != "" {
+			t.Errorf("unexpected config (-want +got):\n%s", diff)
 		}
 	})
 }

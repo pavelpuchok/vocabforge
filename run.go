@@ -12,6 +12,7 @@ import (
 	"github.com/pavelpuchok/vocabforge/usecases/createuser"
 	"github.com/pavelpuchok/vocabforge/users"
 	"github.com/pavelpuchok/vocabforge/vocabulary"
+	"github.com/pavelpuchok/vocabforge/vocabulary/sentences"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -65,8 +66,18 @@ func processCreateUserCmd(logger *slog.Logger, cfg Config, db *mongo.Database) e
 }
 
 func processAddWordCmd(logger *slog.Logger, cfg Config, db *mongo.Database) error {
+	promptProvider, err := sentences.NewAIPromptProvider()
+	if err != nil {
+		return fmt.Errorf("main.processAddWordCmd unable to create prompt provider. %w", err)
+	}
+
+	aiGenerator, err := sentences.NewAIGenerator(cfg.ChatGPT.APIToken, promptProvider)
+	if err != nil {
+		return fmt.Errorf("main.processAddWordCmd unable to create AI generator. %w", err)
+	}
+
 	addWord := addword.UseCase{
-		VocabularyService: vocabulary.NewService(vocabulary.NewMongoRepository(db)),
+		VocabularyService: vocabulary.NewService(vocabulary.NewMongoRepository(db), aiGenerator, cfg.Exercise.Sentences.DefaultCount),
 	}
 
 	userId, err := models.UserIDFromText(cfg.UserID)
@@ -82,7 +93,7 @@ func processAddWordCmd(logger *slog.Logger, cfg Config, db *mongo.Database) erro
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.CLI.CommandTimeout)
 	defer cancel()
 
-	word, err := addWord.Run(ctx, userId, cfg.Spelling, cfg.Definition, lang)
+	word, err := addWord.Run(ctx, userId, cfg.Spelling, cfg.Definition, cfg.LexicalCategory, lang)
 	if err != nil {
 		return fmt.Errorf("main.processAddWordCmd unable to add word. %w", err)
 	}

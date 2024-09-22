@@ -22,14 +22,15 @@ func NewMongoRepository(db *mongo.Database) MongoRepository {
 }
 
 type entity struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty"`
-	UserID        primitive.ObjectID `bson:"userId,omitempty"`
-	Spelling      string
-	Definition    string
-	Language      string
-	LearnStatus   string
-	AnsweredCount uint
-	Exercises     []models.SentenceExercise
+	ID              primitive.ObjectID `bson:"_id,omitempty"`
+	UserID          primitive.ObjectID `bson:"userId,omitempty"`
+	Spelling        string
+	Definition      string
+	Language        string
+	LearnStatus     string
+	LexicalCategory string
+	AnsweredCount   uint
+	Exercises       []models.SentenceExercise
 }
 
 func entityToModel(e entity) (models.Word, error) {
@@ -43,17 +44,18 @@ func entityToModel(e entity) (models.Word, error) {
 	}
 
 	return models.Word{
-		ID:            models.WordID(e.ID.Hex()),
-		UserID:        models.UserID(e.UserID.Hex()),
-		Spelling:      e.Spelling,
-		Definition:    e.Definition,
-		Language:      lang,
-		LearnStatus:   status,
-		AnsweredCount: e.AnsweredCount,
+		ID:              models.WordID(e.ID.Hex()),
+		UserID:          models.UserID(e.UserID.Hex()),
+		Spelling:        e.Spelling,
+		Definition:      e.Definition,
+		Language:        lang,
+		LearnStatus:     status,
+		LexicalCategory: e.LexicalCategory,
+		AnsweredCount:   e.AnsweredCount,
 	}, nil
 }
 
-func (r MongoRepository) AddWord(ctx context.Context, userID models.UserID, spell, definition string, lang models.Language, exercises []models.SentenceExercise) (models.Word, error) {
+func (r MongoRepository) AddWord(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language, exercises []models.SentenceExercise) (models.Word, error) {
 	userId, err := primitive.ObjectIDFromHex(userID.String())
 	if err != nil {
 		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.AddWord unable to build ObjectId from user's ID %s. %w", userID, err)
@@ -68,13 +70,14 @@ func (r MongoRepository) AddWord(ctx context.Context, userID models.UserID, spel
 	}
 
 	newEntity := entity{
-		UserID:        userId,
-		Spelling:      spell,
-		Definition:    definition,
-		Language:      langMarshalled,
-		LearnStatus:   statusMarshalled,
-		AnsweredCount: 0,
-		Exercises:     exercises,
+		UserID:          userId,
+		Spelling:        spell,
+		Definition:      definition,
+		Language:        langMarshalled,
+		LearnStatus:     statusMarshalled,
+		LexicalCategory: lexicalCategory,
+		AnsweredCount:   0,
+		Exercises:       exercises,
 	}
 
 	insRes, err := r.col.InsertOne(ctx, newEntity)

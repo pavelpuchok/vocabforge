@@ -53,11 +53,12 @@ const (
 )
 
 type Word struct {
-	ID            WordID
-	UserID        UserID
-	Spelling      string
-	Definition    string
-	Language      Language
-	LearnStatus   LearnStatus
-	AnsweredCount uint
+	ID              WordID
+	UserID          UserID
+	Spelling        string
+	Definition      string
+	LexicalCategory string
+	Language        Language
+	LearnStatus     LearnStatus
+	AnsweredCount   uint
 }
