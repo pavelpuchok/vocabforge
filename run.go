@@ -73,7 +73,7 @@ func processAddWordCmd(logger *slog.Logger, cfg Config, db *mongo.Database) erro
 
 	aiGenerator, err := sentences.NewAIGenerator(cfg.ChatGPT.APIToken, promptProvider)
 	if err != nil {
-		return fmt.Errorf("main.processAddWordCmd unable to ai generator. %w", err)
+		return fmt.Errorf("main.processAddWordCmd unable to create AI generator. %w", err)
 	}
 
 	addWord := addword.UseCase{
