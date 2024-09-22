@@ -45,7 +45,7 @@ func NewAIGenerator(apiToken string, promptProvider PromptProvider) (AIGenerator
 func (g AIGenerator) Generate(ctx context.Context, spelling, definition, lexicalCategory string, sentencesCount int) ([]Sentence, error) {
 	prompt, err := g.promptProvider.Prompt(spelling, definition, lexicalCategory, sentencesCount)
 	if err != nil {
-		return nil, fmt.Errorf("sentences.AIGenerator.Generate unable to generate promt. %w", err)
+		return nil, fmt.Errorf("sentences.AIGenerator.Generate unable to generate prompt. %w", err)
 	}
 
 	response, err := g.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
