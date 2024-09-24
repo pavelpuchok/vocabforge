@@ -27,10 +27,16 @@ type entity struct {
 	Spelling        string
 	Definition      string
 	Language        string
-	LearnStatus     string
-	LexicalCategory string
-	AnsweredCount   uint
-	Exercises       []models.SentenceExercise
+	LearnStatus     string `bson:"learnStatus"`
+	LexicalCategory string `bson:"lexicalCategory"`
+	AnsweredCount   uint   `bson:"answeredCount"`
+	Exercises       []entityExercise
+}
+
+type entityExercise struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	Sentence string
+	Answered bool
 }
 
 func entityToModel(e entity) (models.Word, error) {
@@ -55,7 +61,7 @@ func entityToModel(e entity) (models.Word, error) {
 	}, nil
 }
 
-func (r MongoRepository) AddWord(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language, exercises []models.SentenceExercise) (models.Word, error) {
+func (r MongoRepository) AddWord(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language, sentences []string) (models.Word, error) {
 	userId, err := primitive.ObjectIDFromHex(userID.String())
 	if err != nil {
 		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.AddWord unable to build ObjectId from user's ID %s. %w", userID, err)
@@ -67,6 +73,14 @@ func (r MongoRepository) AddWord(ctx context.Context, userID models.UserID, spel
 	langMarshalled, err := lang.MarshalText()
 	if err != nil {
 		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.AddWord unable to marhal language %v. %w", lang, err)
+	}
+
+	exercises := make([]entityExercise, len(sentences))
+	for i, text := range sentences {
+		exercises[i] = entityExercise{
+			ID:       primitive.NewObjectID(),
+			Sentence: text,
+		}
 	}
 
 	newEntity := entity{

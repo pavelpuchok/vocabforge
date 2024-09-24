@@ -27,23 +27,20 @@ func NewService(repo Repository, sentences SentencesGenerator, sentencesCount in
 }
 
 type Repository interface {
-	AddWord(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language, exercises []models.SentenceExercise) (models.Word, error)
+	AddWord(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language, exercises []string) (models.Word, error)
 }
 
-func (s Service) AddWord(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language, exercises []models.SentenceExercise) (models.Word, error) {
+func (s Service) AddWord(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language, exercises []string) (models.Word, error) {
 	if len(exercises) == 0 {
 		sentences, err := s.sentences.Generate(ctx, spell, definition, lexicalCategory, s.defaultSentencesCount)
 		if err != nil {
 			return models.Word{}, fmt.Errorf("vocabulary.Service.AddWord unable to generate exercises. %w", err)
 		}
 
-		exercises = make([]models.SentenceExercise, len(sentences))
+		exercises = make([]string, len(sentences))
 
 		for i, ss := range sentences {
-			exercises[i] = models.SentenceExercise{
-				Sentence: ss.Text,
-				Answered: false,
-			}
+			exercises[i] = ss.Text
 		}
 	}
 

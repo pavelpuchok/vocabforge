@@ -12,7 +12,7 @@ type UseCase struct {
 }
 
 type VocabularyService interface {
-	AddWord(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language, exercises []models.SentenceExercise) (models.Word, error)
+	AddWord(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language, exercises []string) (models.Word, error)
 }
 
 func (u UseCase) Run(ctx context.Context, userID models.UserID, spell, definition, lexicalCategory string, lang models.Language) (models.Word, error) {
