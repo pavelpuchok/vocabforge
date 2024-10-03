@@ -1,6 +1,9 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type WordID string
 
@@ -61,4 +64,6 @@ type Word struct {
 	Language        Language
 	LearnStatus     LearnStatus
 	AnsweredCount   uint
+	AddedAt         time.Time
+	LastAskedAt     time.Time
 }

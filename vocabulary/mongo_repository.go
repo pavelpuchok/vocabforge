@@ -3,11 +3,13 @@ package vocabulary
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pavelpuchok/vocabforge/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MongoRepository struct {
@@ -31,6 +33,8 @@ type entity struct {
 	LexicalCategory string `bson:"lexicalCategory"`
 	AnsweredCount   uint   `bson:"answeredCount"`
 	Exercises       []entityExercise
+	AddedAt         time.Time `bson:"addedAt"`
+	LastAskedAt     time.Time `bson:"lastAskedAt,omitempty"`
 }
 
 type entityExercise struct {
@@ -58,6 +62,8 @@ func entityToModel(e entity) (models.Word, error) {
 		LearnStatus:     status,
 		LexicalCategory: e.LexicalCategory,
 		AnsweredCount:   e.AnsweredCount,
+		AddedAt:         e.AddedAt,
+		LastAskedAt:     e.LastAskedAt,
 	}, nil
 }
 
@@ -111,4 +117,82 @@ func (r MongoRepository) AddWord(ctx context.Context, userID models.UserID, spel
 	}
 
 	return m, nil
+}
+
+func (r MongoRepository) StatsByUser(ctx context.Context, userID models.UserID) (models.SentenceExerciseStats, error) {
+	userIDObj, err := primitive.ObjectIDFromHex(userID.String())
+	if err != nil {
+		return models.SentenceExerciseStats{}, fmt.Errorf("vocabulary.MongoRepository.StatsByUser unable to build ObjectId from user's ID %s. %w", userID, err)
+	}
+
+	p := mongo.Pipeline{
+		bson.D{
+			{
+				Key: "$match",
+				Value: bson.M{
+					"userId": userIDObj,
+				},
+			},
+		},
+		bson.D{
+			{
+				Key: "$group",
+				Value: bson.M{
+					"_id": "$learnStatus",
+					"count": bson.M{
+						"$sum": 1,
+					},
+				},
+			},
+		},
+	}
+
+	c, err := r.col.Aggregate(ctx, p)
+	if err != nil {
+		return models.SentenceExerciseStats{}, fmt.Errorf("vocabulary.MongoRepository.StatsByUser unable to query stats. %w", err)
+	}
+
+	var res models.SentenceExerciseStats
+	m := make(map[string]uint)
+	c.Decode(&m)
+	for k, v := range m {
+		var status models.LearnStatus
+		if err := status.UnmarshalText(k); err != nil {
+			return models.SentenceExerciseStats{}, fmt.Errorf("vocabulary.MongoRepository.StatsByUser unable to parse learning status. %w", err)
+		}
+
+		switch status {
+		case models.Pending:
+			res.Pending = v
+		case models.InProgress:
+			res.InProgress = v
+		case models.Learned:
+			res.Learned = v
+		}
+	}
+
+	return res, nil
+}
+
+func (r MongoRepository) OldestByUser(ctx context.Context, userID models.UserID, status models.LearnStatus) (models.SentenceExercise, error) {
+	userIDObj, err := primitive.ObjectIDFromHex(userID.String())
+	if err != nil {
+		return models.SentenceExercise{}, fmt.Errorf("vocabulary.MongoRepository.OldestByUser unable to build ObjectId from user's ID %s. %w", userID, err)
+	}
+
+	opts := options.Find().SetSort(bson.D{{"lastAskedAt", 1}, {"addedAt", 1}})
+	c, err := r.col.Find(ctx, bson.M{"userId": userIDObj}, opts)
+	if err != nil {
+		return models.SentenceExercise{}, fmt.Errorf("vocabulary.MongoRepository.OldestByUser find failed. %w", err)
+	}
+	defer c.Close(ctx)
+
+	for c.Next(ctx) {
+
+	}
+
+	err = c.Err()
+	if err != nil {
+		return models.SentenceExercise{}, fmt.Errorf("vocabulary.MongoRepository.OldestByUser find cursor failed. %w", err)
+	}
 }

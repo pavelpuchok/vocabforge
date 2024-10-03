@@ -14,6 +14,7 @@ func SentenceExerciseIDFromText(s string) (SentenceExerciseID, error) {
 
 type SentenceExercise struct {
 	ID       SentenceExerciseID
+	Word     Word
 	Sentence string
 	Answered bool
 }
