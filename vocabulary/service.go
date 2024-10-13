@@ -50,3 +50,7 @@ func (s Service) AddWord(ctx context.Context, userID models.UserID, spell, defin
 	}
 	return word, nil
 }
+
+func (r MongoRepository) OldestByUser(ctx context.Context, userID models.UserID, status models.LearnStatus) (models.SentenceExercise, error) {
+
+}

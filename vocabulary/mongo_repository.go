@@ -43,7 +43,7 @@ type entityExercise struct {
 	Answered bool
 }
 
-func entityToModel(e entity) (models.Word, error) {
+func entityToModelWord(e entity) (models.Word, error) {
 	var status models.LearnStatus
 	if err := status.UnmarshalText(e.LearnStatus); err != nil {
 		return models.Word{}, fmt.Errorf("unable to unmarshal entity's status %s. %w", e.LearnStatus, err)
@@ -111,7 +111,7 @@ func (r MongoRepository) AddWord(ctx context.Context, userID models.UserID, spel
 		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.AddWord unable to fetch inserted document. %w", err)
 	}
 
-	m, err := entityToModel(insertedEntity)
+	m, err := entityToModelWord(insertedEntity)
 	if err != nil {
 		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.AddWord unable to map entity to model. %w", err)
 	}
@@ -174,25 +174,27 @@ func (r MongoRepository) StatsByUser(ctx context.Context, userID models.UserID) 
 	return res, nil
 }
 
-func (r MongoRepository) OldestByUser(ctx context.Context, userID models.UserID, status models.LearnStatus) (models.SentenceExercise, error) {
+func (r MongoRepository) OldestByUser(ctx context.Context, userID models.UserID, status models.LearnStatus) (models.Word, error) {
 	userIDObj, err := primitive.ObjectIDFromHex(userID.String())
 	if err != nil {
-		return models.SentenceExercise{}, fmt.Errorf("vocabulary.MongoRepository.OldestByUser unable to build ObjectId from user's ID %s. %w", userID, err)
+		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.OldestByUser unable to build ObjectId from user's ID %s. %w", userID, err)
 	}
 
-	opts := options.Find().SetSort(bson.D{{"lastAskedAt", 1}, {"addedAt", 1}})
-	c, err := r.col.Find(ctx, bson.M{"userId": userIDObj}, opts)
+	s, err := status.MarshalText()
 	if err != nil {
-		return models.SentenceExercise{}, fmt.Errorf("vocabulary.MongoRepository.OldestByUser find failed. %w", err)
-	}
-	defer c.Close(ctx)
-
-	for c.Next(ctx) {
-
+		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.OldestByUser unable marshal status. %w", err)
 	}
 
-	err = c.Err()
-	if err != nil {
-		return models.SentenceExercise{}, fmt.Errorf("vocabulary.MongoRepository.OldestByUser find cursor failed. %w", err)
+	opts := options.FindOne().SetSort(bson.D{{"lastAskedAt", 1}, {"addedAt", 1}})
+	res := r.col.FindOne(ctx, bson.M{"userId": userIDObj, "learnStatus": s}, opts)
+	if err := res.Err(); err != nil {
+		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.OldestByUser find failed. %w", err)
 	}
+
+	var e entity
+	if err := res.Decode(&e); err != nil {
+		return models.Word{}, fmt.Errorf("vocabulary.MongoRepository.OldestByUser unable decode find result. %w", err)
+	}
+
+	return entityToModelWord(e)
 }

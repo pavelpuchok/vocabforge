@@ -1,6 +1,9 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type SentenceExerciseID string
 
@@ -13,8 +16,11 @@ func SentenceExerciseIDFromText(s string) (SentenceExerciseID, error) {
 }
 
 type SentenceExercise struct {
-	ID       SentenceExerciseID
-	Word     Word
-	Sentence string
-	Answered bool
+	ID          SentenceExerciseID
+	Word        Word
+	Sentence    string
+	Answered    bool
+	LastAskedAt time.Time
+	AnsweredAt  time.Time
+	CreatedAt   time.Time
 }
