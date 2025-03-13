@@ -37,7 +37,7 @@
     go version
     echo "sqlc version $(sqlc version)"
 
-    mkdir .temp
+    mkdir -p .temp
   '';
 
 

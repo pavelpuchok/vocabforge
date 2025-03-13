@@ -4,6 +4,9 @@ INSERT INTO vocab_words ( preply_id, spelling, definition, lexical_category, lan
 -- name: GetWordByID :one
 SELECT * FROM vocab_words WHERE id = ?;
 
+-- name: ListExistingUserWordsByPreplyIDs :many
+SELECT preply_id FROM vocab_words WHERE user_id = ? AND preply_id IN (sqlc.slice('preplyIds'));
+
 -- name: GetOldestUnseenWord :one
 SELECT * FROM vocab_words WHERE user_id = ? AND viewed_count = 0 ORDER BY added_at DESC LIMIT 1;
 
@@ -34,7 +37,6 @@ SELECT * FROM vocab_words_exercises WHERE user_id=? AND answered=false ORDER BY 
 
 -- name: GetExerciseByTelegramIDAndUserID :one
 SELECT * FROM vocab_words_exercises WHERE user_id=? AND telegram_msg_id=? ;
-
 
 -- name: SetExerciseAnswer :one
 UPDATE  vocab_words_exercises SET 

@@ -8,6 +8,7 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 )
 
@@ -262,6 +263,49 @@ func (q *Queries) IncrementWordViewedCountByID(ctx context.Context, arg Incremen
 	return err
 }
 
+const listExistingUserWordsByPreplyIDs = `-- name: ListExistingUserWordsByPreplyIDs :many
+SELECT preply_id FROM vocab_words WHERE user_id = ? AND preply_id IN (/*SLICE:preplyIds*/?)
+`
+
+type ListExistingUserWordsByPreplyIDsParams struct {
+	UserID    int64
+	PreplyIds []sql.NullString
+}
+
+func (q *Queries) ListExistingUserWordsByPreplyIDs(ctx context.Context, arg ListExistingUserWordsByPreplyIDsParams) ([]sql.NullString, error) {
+	query := listExistingUserWordsByPreplyIDs
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.UserID)
+	if len(arg.PreplyIds) > 0 {
+		for _, v := range arg.PreplyIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:preplyIds*/?", strings.Repeat(",?", len(arg.PreplyIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:preplyIds*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullString
+	for rows.Next() {
+		var preply_id sql.NullString
+		if err := rows.Scan(&preply_id); err != nil {
+			return nil, err
+		}
+		items = append(items, preply_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const resetWordAnsweredCount = `-- name: ResetWordAnsweredCount :exec
 UPDATE vocab_words SET viewed_count = 0, last_showed_at = ? WHERE id = ?
 `
@@ -278,7 +322,6 @@ func (q *Queries) ResetWordAnsweredCount(ctx context.Context, arg ResetWordAnswe
 
 const setExerciseAnswer = `-- name: SetExerciseAnswer :one
 ;
-
 
 UPDATE  vocab_words_exercises SET 
 answered = ?,
