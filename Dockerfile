@@ -4,6 +4,6 @@ COPY . .
 RUN go mod download
 RUN go build -o vocabforgebin
 
-FROM scratch
+FROM alpine:3.21
 COPY --from=0 /opt/app/vocabforgebin /bin/vocabforgebin
 CMD ["/bin/vocabforgebin"]
