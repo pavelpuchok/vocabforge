@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -16,8 +17,8 @@ import (
 )
 
 func main() {
-	openaiAPIToken := os.Getenv("VF_OPENAI_TOKEN")
-	tgAPIToken := os.Getenv("VF_TELEGRAM_TOKEN")
+	openaiAPIToken := readSecretsFile(os.Getenv("VF_OPENAI_TOKEN_FILE"))
+	tgAPIToken := readSecretsFile(os.Getenv("VF_TELEGRAM_TOKEN_FILE"))
 	sqlDBPath := os.Getenv("VF_SQL_DB_PATH")
 
 	sqlDB, err := db.NewSQLiteWithMigrations(sqlDBPath)
@@ -62,4 +63,12 @@ func main() {
 	handlers.Register()
 
 	bot.Start()
+}
+
+func readSecretsFile(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		panic(fmt.Sprintf("unable to read secrets file %s. Error: %s", path, err))
+	}
+	return string(data)
 }
