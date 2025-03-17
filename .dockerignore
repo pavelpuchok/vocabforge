@@ -1,0 +1,12 @@
+Dockerfile
+.devenv/*
+.devenv.*
+devenv.*
+.envrc
+.git
+.github
+.temp/
+LICENCE
+*.yaml
+*.yml
+*.md
