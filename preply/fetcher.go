@@ -161,7 +161,7 @@ func (f *VocabFetcher) fetch(cookie string, payload *bytes.Reader) (response, er
 	var res response
 	err = d.Decode(&res)
 	if err != nil {
-		return response{}, fmt.Errorf("unable to decode response. %w", err)
+		return response{}, fmt.Errorf("unable to decode response. %w. %s", err, resp.Body)
 	}
 
 	return res, nil
