@@ -10,8 +10,6 @@ import (
 
 	"github.com/pavelpuchok/vocabforge/ai"
 	"github.com/pavelpuchok/vocabforge/db/sqlc"
-	"github.com/pavelpuchok/vocabforge/job"
-	"github.com/pavelpuchok/vocabforge/preply"
 	"gopkg.in/telebot.v4"
 )
 
@@ -26,7 +24,6 @@ type AuthorizedHandler func(telebot.Context, *sqlc.Queries, sqlc.User) error
 
 func (h Handlers) Register() {
 	h.registerNonAuthorized("/start", h.handleStart)
-	h.registerAuthorized("/preply_sync", h.handlePreplySync)
 	h.registerAuthorized("/learn_vocab", h.handleLearnVocab)
 	h.registerAuthorized(telebot.OnCallback, h.handleCallback)
 	h.registerAuthorized(telebot.OnReply, h.handleReply)
@@ -91,54 +88,12 @@ func (h Handlers) handleStart(ctx telebot.Context, queries *sqlc.Queries) error 
 		return fmt.Errorf("failed to create an user. %w", err)
 	}
 
-	err = ctx.Reply(formatMessage("Hello %s!", usr.Name))
+	err = ctx.Reply(formatMessage("Hello %s! Your ID: %d", usr.Name, usr.ID))
 	if err != nil {
 		return fmt.Errorf("failed to send response. %w", err)
 	}
 
 	return nil
-}
-
-func (h Handlers) handlePreplySync(ctx telebot.Context, queries *sqlc.Queries, user sqlc.User) error {
-	cookies := strings.Join(ctx.Args(), " ")
-
-	fetcher := preply.VocabFetcher{}
-
-	q := job.Queue[job.TranslateWordsJob]{
-		GroupName: "job.TranslateWordsJob",
-		Storage:   job.DBStorage{Queries: queries},
-	}
-
-	limit := 100
-	offset := 0
-	count := 0
-	for {
-		v, err := fetcher.Fetch(cookies, limit, offset)
-		if err != nil {
-			ctx.Reply(fmt.Sprintf("Fetch failed. %s", err))
-			return fmt.Errorf("failed to fetch vocab. %w", err)
-		}
-
-		err = q.Enqueue(h.RootCtx, job.TranslateWordsJob{
-			Words:          v.Words.Nodes,
-			UserID:         user.ID,
-			TargetLanguage: "ru",
-		})
-
-		if err != nil {
-			ctx.Reply(fmt.Sprintf("Unable to enqueu words translation. %s", err))
-			return fmt.Errorf("failed to enqueue translation. %w", err)
-		}
-
-		count += len(v.Words.Nodes)
-
-		offset += limit
-		if offset >= v.Words.TotalCount {
-			break
-		}
-	}
-
-	return ctx.Reply(formatMessage("%d new words were added to the translation queue.", count))
 }
 
 func (h Handlers) handleLearnVocab(ctx telebot.Context, queries *sqlc.Queries, user sqlc.User) error {
