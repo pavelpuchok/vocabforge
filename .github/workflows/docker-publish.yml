@@ -65,7 +65,9 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
-          tags: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.bumpversion.outputs.tag }},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.bumpversion.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
@@ -78,7 +80,9 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         env:
           # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-          TAGS: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.bumpversion.outputs.tag }},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          TAGS: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.bumpversion.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
