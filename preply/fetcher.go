@@ -51,6 +51,9 @@ type response struct {
 	Data struct {
 		Vocabulary Vocabulary `json:"vocabulary"`
 	} `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
 }
 
 type Vocabulary struct {
@@ -134,7 +137,7 @@ func (f *VocabFetcher) fetch(cookie string, payload *bytes.Reader) (response, er
 	req.Header.Set("accept", "*/*")
 	req.Header.Set("accept-language", "en-US,en;q=0.9,be;q=0.8,ru;q=0.7")
 	req.Header.Set("apollographql-client-name", "edu-frontend")
-	req.Header.Set("apollographql-client-version", "edu-frontend-2025-01-24-16-42-arm64")
+	req.Header.Set("apollographql-client-version", "edu-frontend-2025-03-18-20-40-arm64")
 	req.Header.Set("content-type", "application/json")
 	req.Header.Set("priority", "u=1, i")
 	req.Header.Set("sec-ch-ua", "\"Brave\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"")
@@ -147,6 +150,7 @@ func (f *VocabFetcher) fetch(cookie string, payload *bytes.Reader) (response, er
 	req.Header.Set("x-accept-language", "en")
 	req.Header.Set("Referer", "https://preply.com/edu/english/learn/vocab")
 	req.Header.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+	req.Header.Set("origin", "https://preply.com")
 	req.Header.Set("cookie", cookie)
 
 	client := &http.Client{}
@@ -162,6 +166,10 @@ func (f *VocabFetcher) fetch(cookie string, payload *bytes.Reader) (response, er
 	err = d.Decode(&res)
 	if err != nil {
 		return response{}, fmt.Errorf("unable to decode response. %w", err)
+	}
+
+	if len(res.Errors) > 0 {
+		return response{}, fmt.Errorf("unable perform requests. Preply Error: %s", res.Errors[0].Message)
 	}
 
 	return res, nil
