@@ -119,14 +119,6 @@ func (h Handlers) handlePreplySync(ctx telebot.Context, queries *sqlc.Queries, u
 			return fmt.Errorf("failed to fetch vocab. %w", err)
 		}
 
-		words := make([]ai.WordWithDefinition, 0, len(v.Words.Nodes))
-		// for _, node := range v.Words.Nodes {
-		// 	words = append(words, ai.WordWithDefinition{
-		// 		Spelling:   node.Spelling,
-		// 		Definition: node.Definition,
-		// 	})
-		// }
-
 		err = q.Enqueue(h.RootCtx, job.TranslateWordsJob{
 			Words:          v.Words.Nodes,
 			UserID:         user.ID,
@@ -138,39 +130,7 @@ func (h Handlers) handlePreplySync(ctx telebot.Context, queries *sqlc.Queries, u
 			return fmt.Errorf("failed to enqueue translation. %w", err)
 		}
 
-		count += len(words)
-
-		// translatedWords, err := h.OpenAI.RequestTranslation(h.RootCtx, translateRequest, "ru")
-		// if err != nil {
-		// 	ctx.Reply(fmt.Sprintf("Translation failed. %s", err))
-		// 	return fmt.Errorf("failed translate fetched words. %w", err)
-		// }
-		//
-		// for i, node := range v.Words.Nodes {
-		// 	_, err = queries.AddWord(h.RootCtx, sqlc.AddWordParams{
-		// 		PreplyID: sql.NullString{
-		// 			String: node.ID,
-		// 			Valid:  true,
-		// 		},
-		// 		Spelling:        node.Spelling,
-		// 		Definition:      node.Definition,
-		// 		LexicalCategory: node.LexicalCategory,
-		// 		TranslationRu:   translatedWords[i],
-		// 		Lang:            "en",
-		// 		UserID:          user.ID,
-		// 		AddedAt:         time.Now(),
-		// 	})
-		//
-		// 	if err != nil {
-		// 		if err.Error() != "constraint failed: UNIQUE constraint failed: vocab_words.user_id, vocab_words.preply_id (2067)" {
-		// 			//TODO:logger
-		// 			fmt.Printf("failed to add word: \"%s\"\n", err.Error())
-		// 			return err
-		// 		}
-		// 	}
-		//
-		// 	count += 1
-		// }
+		count += len(v.Words.Nodes)
 
 		offset += limit
 		if offset >= v.Words.TotalCount {
