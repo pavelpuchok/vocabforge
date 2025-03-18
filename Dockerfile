@@ -7,5 +7,6 @@ ENV GOCACHE=/root/.cache/go-build
 RUN --mount=type=cache,target="/root/.cache/go-build" go build -o vocabforgebin
 
 FROM alpine:3.21
+EXPOSE 8080
 COPY --from=0 /opt/app/vocabforgebin /bin/vocabforgebin
 CMD ["/bin/vocabforgebin"]

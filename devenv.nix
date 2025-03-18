@@ -31,6 +31,7 @@
     export SHELL=${pkgs.bashInteractive}/bin/bash
     export VF_TELEGRAM_TOKEN_FILE=$XDG_RUNTIME_DIR/vf_tg_bot_token
     export VF_OPENAI_TOKEN_FILE=$XDG_RUNTIME_DIR/vf_openai_token
+    export VF_HTTP_TOKEN_FILE=$XDG_RUNTIME_DIR/vf_server_token
     export VF_SQL_DB_PATH="$(pwd)/.temp/db.sqlite3"
 
     git --version

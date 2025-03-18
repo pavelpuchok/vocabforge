@@ -6,9 +6,11 @@ services:
     environment:
         VF_TELEGRAM_TOKEN_FILE: /run/secrets/tgtoken
         VF_OPENAI_TOKEN_FILE: /run/secrets/openaitoken
+        VF_HTTP_TOKEN_FILE: /run/secrets/servertoken
         VF_SQL_DB_PATH: /var/opt/vocabforge-data/docker_db.sqlite3
     volumes:
       - "${XDG_RUNTIME_DIR}/vf_tg_bot_token:/run/secrets/tgtoken"
       - "${XDG_RUNTIME_DIR}/vf_openai_token:/run/secrets/openaitoken"
+      - "${XDG_RUNTIME_DIR}/vf_server_token:/run/secrets/servertoken"
       - ".temp/:/var/opt/vocabforge-data/"
 

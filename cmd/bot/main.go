@@ -11,6 +11,7 @@ import (
 	"github.com/pavelpuchok/vocabforge/db"
 	"github.com/pavelpuchok/vocabforge/db/sqlc"
 	"github.com/pavelpuchok/vocabforge/job"
+	"github.com/pavelpuchok/vocabforge/server"
 	"github.com/pavelpuchok/vocabforge/telegram"
 	"github.com/sashabaranov/go-openai"
 	"gopkg.in/telebot.v4"
@@ -19,6 +20,12 @@ import (
 func main() {
 	openaiAPIToken := readSecretsFile(os.Getenv("VF_OPENAI_TOKEN_FILE"))
 	tgAPIToken := readSecretsFile(os.Getenv("VF_TELEGRAM_TOKEN_FILE"))
+	httpToken := readSecretsFile(os.Getenv("VF_HTTP_TOKEN_FILE"))
+	httpAddr := os.Getenv("VF_HTTP_ADDR")
+	if httpAddr == "" {
+		httpAddr = ":8080"
+	}
+
 	sqlDBPath := os.Getenv("VF_SQL_DB_PATH")
 
 	sqlDB, err := db.NewSQLiteWithMigrations(sqlDBPath)
@@ -32,14 +39,23 @@ func main() {
 
 	rootCtx := context.Background()
 
+	queue := job.Queue[job.TranslateWordsJob]{Storage: job.DBStorage{Queries: queries}, GroupName: "job.TranslateWordsJob"}
+
 	worker := job.TranslateWordsJobWorker{
 		Queries: queries,
-		Queue:   job.Queue[job.TranslateWordsJob]{Storage: job.DBStorage{Queries: queries}, GroupName: "job.TranslateWordsJob"},
+		Queue:   queue,
 		Logger:  logger.With(slog.String("Caller", "job.TranslateWordsJobWorker")),
 		OpenAI:  openAI,
 	}
 
 	go worker.Run(rootCtx)
+
+	httpServer := server.New(httpAddr, httpToken, queue, logger)
+	go func() {
+		if err := httpServer.Run(rootCtx); err != nil {
+			logger.Error("unable to run HTTP server", slog.String("error", err.Error()))
+		}
+	}()
 
 	settings := telebot.Settings{
 		Token:     tgAPIToken,
