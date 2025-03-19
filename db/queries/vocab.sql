@@ -20,10 +20,10 @@ SELECT * FROM vocab_words WHERE user_id = ? AND viewed_count > 0 AND learned_at 
 UPDATE vocab_words SET viewed_count = viewed_count + 1, last_showed_at = ? WHERE id = ?;
 
 -- name: IncrementWordAnsweredCount :one
-UPDATE vocab_words SET viewed_count = viewed_count + 1, last_showed_at = ? WHERE id = ? RETURNING answered_count;
+UPDATE vocab_words SET answered_count = answered_count + 1 WHERE id = ? RETURNING answered_count;
 
 -- name: ResetWordAnsweredCount :exec
-UPDATE vocab_words SET viewed_count = 0, last_showed_at = ? WHERE id = ?;
+UPDATE vocab_words SET answered_count = 0 WHERE id = ?;
 
 -- name: SetWordLearned :exec
 UPDATE vocab_words SET learned_at = ? WHERE id = ? ;

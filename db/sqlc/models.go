@@ -11,7 +11,6 @@ import (
 
 type JobsQueue struct {
 	ID        int64
-	IsRemoved bool
 	GroupName string
 	Item      string
 	CreatedAt time.Time

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ type Handlers struct {
 	RootCtx context.Context
 	OpenAI  *ai.OpenAI
 	Bot     *telebot.Bot
+	Logger  *slog.Logger
 }
 
 type NonAuthorizedHandler func(telebot.Context, *sqlc.Queries) error
@@ -97,10 +99,13 @@ func (h Handlers) handleStart(ctx telebot.Context, queries *sqlc.Queries) error 
 }
 
 func (h Handlers) handleLearnVocab(ctx telebot.Context, queries *sqlc.Queries, user sqlc.User) error {
+	h.Logger.Debug("handleLearnVocab about to start", slog.Int64("userID", user.ID))
+
 	learningCount, err := queries.CountLearningWords(h.RootCtx, user.ID)
 	if err != nil {
 		return fmt.Errorf("unable to count learning words. %w", err)
 	}
+	h.Logger.Debug(fmt.Sprintf("handleLearnVocab total learning words: %d", learningCount), slog.Int64("userID", user.ID))
 
 	var w sqlc.VocabWord
 	var wordFound bool
@@ -113,6 +118,7 @@ func (h Handlers) handleLearnVocab(ctx telebot.Context, queries *sqlc.Queries, u
 			}
 			wordFound = false
 		}
+		h.Logger.Debug(fmt.Sprintf("handleLearnVocab using the oldest unseen word"), slog.Int64("userID", user.ID), slog.Int64("wordID", w.ID))
 	}
 
 	if !wordFound {
@@ -125,6 +131,7 @@ func (h Handlers) handleLearnVocab(ctx telebot.Context, queries *sqlc.Queries, u
 			ctx.Reply(formatMessage("Failed to find word %s", err))
 			return fmt.Errorf("unable to get word. %w", err)
 		}
+		h.Logger.Debug(fmt.Sprintf("handleLearnVocab using new word as no learning ones left"), slog.Int64("userID", user.ID), slog.Int64("wordID", w.ID))
 	}
 
 	err = queries.IncrementWordViewedCountByID(h.RootCtx, sqlc.IncrementWordViewedCountByIDParams{
@@ -169,12 +176,8 @@ func (h Handlers) handleLearnVocab(ctx telebot.Context, queries *sqlc.Queries, u
 	return nil
 }
 
-func (h Handlers) handleCallback(ctx telebot.Context, queries *sqlc.Queries, user sqlc.User) error {
-	fmt.Printf("callback: %s\n", ctx.Callback().MessageID)
-	return nil
-}
-
 func (h Handlers) handleReply(ctx telebot.Context, queries *sqlc.Queries, user sqlc.User) error {
+	h.Logger.Debug(fmt.Sprintf("handleReply is about to start"), slog.Int64("userID", user.ID))
 	telegramMessageID := int64(ctx.Message().ReplyTo.ID)
 	rootCtx := h.RootCtx
 
@@ -186,8 +189,9 @@ func (h Handlers) handleReply(ctx telebot.Context, queries *sqlc.Queries, user s
 		return fmt.Errorf("unable to find exercise (UserID: %d, TelegramMsgID: %d). %w", user.ID, telegramMessageID, err)
 	}
 
-	answerText := ctx.Text()
-	isCorrectAnswer := strings.TrimSpace(answerText) == ex.Answer
+	answerText := strings.TrimSpace(strings.ToLower(ctx.Text()))
+	expectedText := strings.TrimSpace(strings.ToLower(ex.Answer))
+	isCorrectAnswer := answerText == expectedText
 
 	_, err = queries.SetExerciseAnswer(rootCtx, sqlc.SetExerciseAnswerParams{
 		Answered:          true,
@@ -206,11 +210,8 @@ func (h Handlers) handleReply(ctx telebot.Context, queries *sqlc.Queries, user s
 	}
 
 	if !isCorrectAnswer {
-		fmt.Printf("Expected: '%s', Got: '%s'\n", ex.Answer, strings.TrimSpace(answerText))
-		err = queries.ResetWordAnsweredCount(h.RootCtx, sqlc.ResetWordAnsweredCountParams{
-			LastShowedAt: sql.NullTime{Time: time.Now(), Valid: true},
-			ID:           w.ID,
-		})
+		h.Logger.Debug(fmt.Sprintf("handleReply answer is incorrect. Expected: %s, Got: %s", expectedText, answerText), slog.Int64("userID", user.ID), slog.Int64("wordID", w.ID), slog.Int64("exerciseID", ex.ID))
+		err = queries.ResetWordAnsweredCount(h.RootCtx, w.ID)
 		if err != nil {
 			return fmt.Errorf("failed to reset word answered count. %w", err)
 		}
@@ -221,10 +222,7 @@ func (h Handlers) handleReply(ctx telebot.Context, queries *sqlc.Queries, user s
 		return nil
 	}
 
-	answeredCount, err := queries.IncrementWordAnsweredCount(rootCtx, sqlc.IncrementWordAnsweredCountParams{
-		LastShowedAt: sql.NullTime{Time: time.Now(), Valid: true},
-		ID:           w.ID,
-	})
+	answeredCount, err := queries.IncrementWordAnsweredCount(rootCtx, w.ID)
 	if err != nil {
 		return fmt.Errorf("failed to update word answered count. %w", err)
 	}
@@ -242,13 +240,21 @@ func (h Handlers) handleReply(ctx telebot.Context, queries *sqlc.Queries, user s
 		if err != nil {
 			return fmt.Errorf("failed to send correct answer reply for a learned word. %w", err)
 		}
+
+		h.Logger.Debug("handleReply word is learned", slog.Int64("userID", user.ID), slog.Int64("wordID", w.ID), slog.Int64("exerciseID", ex.ID))
 		return nil
 	}
 
-	err = ctx.Reply(MustRenderCorrectAnswer(int(answeredCount)))
+	err = ctx.Reply(MustRenderCorrectAnswer(int(answeredCount + 1)))
 	if err != nil {
 		return fmt.Errorf("failed to send correct answer reply. %w", err)
 	}
+	h.Logger.Debug(fmt.Sprintf("handleReply answer is correct. Answered Count: %d", answeredCount), slog.Int64("userID", user.ID), slog.Int64("wordID", w.ID), slog.Int64("exerciseID", ex.ID))
 
+	return nil
+}
+
+func (h Handlers) handleCallback(ctx telebot.Context, queries *sqlc.Queries, user sqlc.User) error {
+	h.Logger.Debug(fmt.Sprintf("handleCallback is about to start"), slog.Int64("userID", user.ID))
 	return nil
 }

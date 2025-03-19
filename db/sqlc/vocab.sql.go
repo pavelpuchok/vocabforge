@@ -234,16 +234,11 @@ func (q *Queries) GetWordByID(ctx context.Context, id int64) (VocabWord, error) 
 }
 
 const incrementWordAnsweredCount = `-- name: IncrementWordAnsweredCount :one
-UPDATE vocab_words SET viewed_count = viewed_count + 1, last_showed_at = ? WHERE id = ? RETURNING answered_count
+UPDATE vocab_words SET answered_count = answered_count + 1 WHERE id = ? RETURNING answered_count
 `
 
-type IncrementWordAnsweredCountParams struct {
-	LastShowedAt sql.NullTime
-	ID           int64
-}
-
-func (q *Queries) IncrementWordAnsweredCount(ctx context.Context, arg IncrementWordAnsweredCountParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, incrementWordAnsweredCount, arg.LastShowedAt, arg.ID)
+func (q *Queries) IncrementWordAnsweredCount(ctx context.Context, id int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, incrementWordAnsweredCount, id)
 	var answered_count int64
 	err := row.Scan(&answered_count)
 	return answered_count, err
@@ -307,16 +302,11 @@ func (q *Queries) ListExistingUserWordsByPreplyIDs(ctx context.Context, arg List
 }
 
 const resetWordAnsweredCount = `-- name: ResetWordAnsweredCount :exec
-UPDATE vocab_words SET viewed_count = 0, last_showed_at = ? WHERE id = ?
+UPDATE vocab_words SET answered_count = 0 WHERE id = ?
 `
 
-type ResetWordAnsweredCountParams struct {
-	LastShowedAt sql.NullTime
-	ID           int64
-}
-
-func (q *Queries) ResetWordAnsweredCount(ctx context.Context, arg ResetWordAnsweredCountParams) error {
-	_, err := q.db.ExecContext(ctx, resetWordAnsweredCount, arg.LastShowedAt, arg.ID)
+func (q *Queries) ResetWordAnsweredCount(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, resetWordAnsweredCount, id)
 	return err
 }
 

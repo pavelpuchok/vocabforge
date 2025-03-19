@@ -18,6 +18,12 @@ import (
 )
 
 func main() {
+	logLevel := os.Getenv("VF_LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = "INFO"
+	}
+	logger := initLogger(logLevel)
+
 	openaiAPIToken := readSecretsFile(os.Getenv("VF_OPENAI_TOKEN_FILE"))
 	tgAPIToken := readSecretsFile(os.Getenv("VF_TELEGRAM_TOKEN_FILE"))
 	httpToken := readSecretsFile(os.Getenv("VF_HTTP_TOKEN_FILE"))
@@ -33,7 +39,6 @@ func main() {
 		panic(err)
 	}
 
-	logger := slog.Default()
 	openAI := ai.NewOpenAI(openai.NewClient(openaiAPIToken))
 	queries := sqlc.New(sqlDB)
 
@@ -74,11 +79,22 @@ func main() {
 		OpenAI:  openAI,
 		RootCtx: rootCtx,
 		Bot:     bot,
+		Logger:  logger,
 	}
 
 	handlers.Register()
 
 	bot.Start()
+}
+
+func initLogger(level string) *slog.Logger {
+	var l slog.Level
+	err := l.UnmarshalText([]byte(level))
+	if err != nil {
+		panic(fmt.Sprintf("unable to parse level: %s. err: %s", level, err))
+	}
+
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: l}))
 }
 
 func readSecretsFile(path string) string {
